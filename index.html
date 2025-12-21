@@ -23,6 +23,12 @@
             background-color: #000;
             border-radius: 8px;
             overflow: hidden;
+            width: 100%;
+        }
+
+        #video-container iframe {
+            width: 100% !important;
+            height: 100% ipor !important;
         }
 
         /* 選択肢ボタンのスタイル */
@@ -213,7 +219,8 @@
         // VimeoのAPIを使って、指定したIDの動画を埋め込みます
         const options = {
             url: currentQuiz.vimeoId,
-            width: 640,
+            //width: 640,
+            responsive: true,
             loop: true,     // 繰り返し再生するか
             autoplay: true, // 自動再生するか（ブラウザによってはミュート時のみ有効）
             muted: true,    // 音声をミュートにするか（自動再生のためにはtrue推奨）
