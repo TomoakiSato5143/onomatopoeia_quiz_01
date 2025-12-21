@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オノマトペクイズ</title>
+    <style>
+        /* 簡単なCSSリセットとスタイル */
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            color: #333;
+            padding: 20px;
+        }
+        h1 { font-size: 1.2rem; margin-bottom: 20px; }
+        
+        /* 動画エリアのスタイル */
+        #video-container {
+            max-width: 640px;
+            margin: 0 auto 30px;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* 選択肢ボタンのスタイル */
+        #choices-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2列で表示 */
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .choice-btn {
+            background-color: white;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            padding: 15px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .choice-btn:hover {
+            background-color: #eef;
+            border-color: #aaf;
+        }
+
+        /* 結果表示エリア */
+        #result-area {
+            margin-top: 30px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            min-height: 50px;
+        }
+        .correct { color: #e60033; }
+        .incorrect { color: #333; }
+
+        /* 「次の問題へ」ボタン */
+        #next-btn {
+            display: none; /* 最初は隠す */
+            margin-top: 20px;
+            padding: 10px 30px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>この動画が表すオノマトペはどれ？</h1>
+
+    <div id="video-container"></div>
+
+    <div id="choices-container">
+        </div>
+
+    <div id="result-area"></div>
+    
+    <button id="next-btn" onclick="location.reload();">次の問題へ</button>
+
+    <script src="https://player.vimeo.com/api/player.js"></script>
+
+    <script>
+        // ==========================================
+        // 【設定エリア】ここを書き換えてください
+        // ==========================================
+        
+        // クイズデータのリスト
+        // vimeoId: 動画のID（URLの末尾の数字 https://vimeo.com/123456789 -> 123456789）
+        // answer: 正解の言葉
+        // options: 選択肢（正解も含めること）
+        const quizData = [
+            // --- 1個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148246748/5d94598b5e?fl=ml&fe=ec', // ※これはサンプルのVimeo動画IDです。自分のIDに書き換えてください
+                answer: 'ふにゃー',
+                options: ['ふらふら', 'ふにゃー', 'ふわり', 'ふかふか']
+            },
+
+            // --- 2個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148246757/7fbc371057?fl=ml&fe=ec', // ※サンプル用に同じIDを入れています
+                answer: 'ふわり',
+                options: ['ふかふか', 'ふわり', 'ふにゃー', 'ふっくら']
+            },
+
+            // --- 3個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148246767/e87a9274d7?fl=ml&fe=ec', // ※これはサンプルのVimeo動画IDです。自分のIDに書き換えてください
+                answer: 'ふわふわ',
+                options: ['ふわり', 'ふらふら', 'ふわふわ', 'ふにゃー']
+            },
+
+            // --- 4個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148246781/8f7c5d0339?fl=ml&fe=ec', // ※サンプル用に同じIDを入れています
+                answer: 'ふかふか',
+                options: ['ふにゃー', 'ふらふら', 'ふわり', 'ふかふか']
+            },
+
+            // --- 5個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247403/928b575b7a?fl=ml&fe=ec', // ※これはサンプルのVimeo動画IDです。自分のIDに書き換えてください
+                answer: 'がさがさ',
+                options: ['かさかさ', 'がさがさ']
+            },
+
+            // --- 6個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247457/e6fe5eb312?fl=ml&fe=ec', // ※サンプル用に同じIDを入れています
+                answer: 'かさかさ',
+                options: ['かさかさ', 'がさがさ']
+            },
+
+            // --- 7個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247485/b21a287d0d?fl=ml&fe=ec', // ※これはサンプルのVimeo動画IDです。自分のIDに書き換えてください
+                answer: 'がらがら',
+                options: ['がらがら', 'からから']
+            },
+
+            // --- 8個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247518/468e4fb3b7?fl=ml&fe=ec', // ※サンプル用に同じIDを入れています
+                answer: 'からから',
+                options: ['がらがら', 'からから']
+            },
+
+            // --- 9個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247536/25a4654ab7?fl=ml&fe=ec', // ※これはサンプルのVimeo動画IDです。自分のIDに書き換えてください
+                answer: 'ごろごろ',
+                options: ['ごろごろ', 'ころころ']
+            },
+
+            // --- 10個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247547/172219ee0f?fl=ml&fe=ec', // ※サンプル用に同じIDを入れています
+                answer: 'ころころ',
+                options: ['ごろごろ', 'ころころ']
+            },
+
+            // --- 11個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247561/779cf2c012?fl=ml&fe=ec', // ※これはサンプルのVimeo動画IDです。自分のIDに書き換えてください
+                answer: 'ドンドン',
+                options: ['ドンドン', 'トントン']
+            },
+
+            // --- 12個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247577/98cb295f74?fl=ml&fe=ec', // ※サンプル用に同じIDを入れています
+                answer: 'トントン',
+                options: ['ドンドン', 'トントン']
+            },
+
+            // --- 13個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247592/c674a5717c?fl=ml&fe=ec', // ※これはサンプルのVimeo動画IDです。自分のIDに書き換えてください
+                answer: 'バンッ',
+                options: ['バンッ', 'パンッ']
+            },
+
+            // --- 14個目 ---
+            {
+                vimeoId: 'https://vimeo.com/1148247607/df73d79fce?fl=ml&fe=ec', // ※サンプル用に同じIDを入れています
+                answer: 'パンッ',
+                options: ['バンッ', 'パンッ']
+            },
+            // 必要なだけ {} を追加してください
+        
+        ];
+
+        // ==========================================
+        // 【ロジックエリア】ここから下は変更不要です
+        // ==========================================
+
+        const videoContainer = document.getElementById('video-container');
+        const choicesContainer = document.getElementById('choices-container');
+        const resultArea = document.getElementById('result-area');
+        const nextBtn = document.getElementById('next-btn');
+
+        // 1. クイズをランダムに1つ選ぶ
+        const currentQuiz = quizData[Math.floor(Math.random() * quizData.length)];
+
+        // 2. Vimeoプレーヤーをセットアップ
+        // VimeoのAPIを使って、指定したIDの動画を埋め込みます
+        const options = {
+            url: currentQuiz.vimeoId,
+            width: 640,
+            loop: true,     // 繰り返し再生するか
+            autoplay: true, // 自動再生するか（ブラウザによってはミュート時のみ有効）
+            muted: true,    // 音声をミュートにするか（自動再生のためにはtrue推奨）
+            controls: false // プレーヤーの操作バーを隠す（クイズに集中させるため）
+        };
+
+        const player = new Vimeo.Player('video-container', options);
+        player.setVolume(0); // 念のため音量を0に
+
+        // 3. 選択肢ボタンをシャッフルして表示する関数
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        const shuffledOptions = shuffle([...currentQuiz.options]); // 配列をコピーしてシャッフル
+
+        shuffledOptions.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.textContent = text;
+            
+            // ボタンを押した時の処理
+            btn.onclick = () => {
+                checkAnswer(text);
+            };
+            
+            choicesContainer.appendChild(btn);
+        });
+
+        // 4. 正誤判定の処理
+        function checkAnswer(selectedText) {
+            // すべてのボタンを押せなくする
+            const allBtns = document.querySelectorAll('.choice-btn');
+            allBtns.forEach(btn => btn.disabled = true);
+
+            if (selectedText === currentQuiz.answer) {
+                resultArea.innerHTML = '<span class="correct">正解！⭕️</span>';
+                // 正解の演出などをここに追加できます
+            } else {
+                resultArea.innerHTML = '<span class="incorrect">残念... 正解は「' + currentQuiz.answer + '」でした</span>';
+            }
+            
+            // 次へボタンを表示
+            nextBtn.style.display = 'inline-block';
+        }
+
+    </script>
+</body>
+</html>
